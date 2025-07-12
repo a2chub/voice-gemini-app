@@ -108,6 +108,112 @@
 
 ---
 
+### 2025-07-12 - テスト実行と動作確認
+**実装者**: AI Assistant
+**関連ファイル**: 
+- 全テストファイル（`/tests/`ディレクトリ）
+- メインアプリケーション（`/src/main.py`）
+- 設定ファイル（`.env`）
+
+**実装内容**:
+テスト実行と動作確認を実施。
+
+**1. pytest実行結果**:
+```bash
+$ python -m pytest tests/ -v
+```
+結果：
+- ModuleNotFoundError: No module named 'genai_processors'
+- 依存関係が仮想環境にインストールされていないため、すべてのテストが実行不可
+
+**2. メインアプリケーション起動テスト**:
+```bash
+$ python -m src.main
+```
+結果：
+- ModuleNotFoundError: No module named 'pydantic_settings'
+- 同様に依存関係の問題でアプリケーションが起動不可
+
+**3. 個別モジュールインポートテスト**:
+```bash
+$ python -c "from src.config import get_config"
+```
+結果：
+- ModuleNotFoundError: No module named 'pydantic_settings'
+- 設定モジュールも依存関係エラー
+
+**課題と解決策**:
+- **課題**: 必要なPythonパッケージが仮想環境にインストールされていない
+- **解決策**: 
+  1. 仮想環境の有効化: `source venv/bin/activate` (macOS/Linux) または `venv\Scripts\activate` (Windows)
+  2. 依存関係のインストール: `pip install -r requirements.txt`
+  3. 追加で必要なパッケージ: `pip install google-generativeai`
+
+**依存関係の問題**:
+- genai-processors: PyPIに存在しない可能性がある（カスタムパッケージ？）
+- vibelogger: 同様にPyPIに存在しない可能性
+- これらのパッケージが利用できない場合、代替実装が必要
+
+**テスト環境の現状**:
+- Pythonバージョン: 確認が必要
+- 仮想環境: 作成済みだが依存関係未インストール
+- 環境変数: .envファイル作成済み、Gemini APIキー設定済み
+
+**次のステップ**:
+1. 仮想環境を有効化して依存関係をインストール
+2. genai-processorsとvibeloggerの入手方法を確認
+3. 代替ライブラリの検討（必要に応じて）
+4. 依存関係解決後、再度テスト実行
+
+**メトリクス**:
+- テスト実行試行回数: 3回
+- 成功したテスト: 0個
+- 主要な阻害要因: 外部依存関係の欠如
+
+---
+
+### 2025-07-12 - vibe-logger修正実装
+**実装者**: AI Assistant
+**関連ファイル**: 
+- `/src/utils/logger.py` (修正)
+- 全てのプロセッサーファイル（ログ呼び出し修正）
+- `/src/main.py`（ログ呼び出し修正）
+- `/src/audio/recorder.py`, `/src/audio/player.py`（ログ呼び出し修正）
+
+**実装内容**:
+1. **vibe-loggerの正しい使用方法の発見**
+   - GitHubリポジトリとドキュメントから正しいAPIを確認
+   - インポート: `from vibe_logger import Logger`（アンダースコア使用）
+   - API: 第一引数にメッセージ、その後にキーワード引数
+
+2. **logger.pyの修正**
+   - vibe-loggerの正しいインポートパスに変更
+   - AsyncLoggerWrapperクラスでメッセージを第一引数として処理
+   - log_executionデコレーターの修正
+
+3. **プロジェクト全体のログ呼び出し修正**
+   - 誤: `await logger.info(operation="x", message="y")`
+   - 正: `await logger.info("y", operation="x")`
+   - 修正ファイル数: 8ファイル以上
+
+**課題と解決策**:
+- **課題**: vibe-loggerのAPI使用方法が間違っていた
+- **解決**: ユーザー提供のURLから正しい使用方法を確認し、全ファイルを修正
+- **課題**: シェル環境エラーでPythonスクリプトが実行できない
+- **解決**: ファイル操作APIを直接使用して修正を実施
+
+**次のステップ**:
+- テスト環境で動作確認
+- genai-processorsの代替実装検討
+- 統合テストの実施
+
+**メトリクス**:
+- 修正時間: 約20分
+- 修正ファイル数: 8ファイル
+- 修正箇所数: 約30箇所以上
+
+---
+
 ## 今後の実装予定
 
 ### フェーズ1実装開始前チェックリスト

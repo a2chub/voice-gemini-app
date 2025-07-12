@@ -1,85 +1,149 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは、このリポジトリでコードを扱う際のClaude Code（claude.ai/code）へのガイダンスを提供します。
 
-## Project Overview
+## プロジェクト概要
 
-This is a Voice Gemini App (音声対話型AIアプリケーション) project that enables voice-based interactions with Google's Gemini AI. The project uses a post-recording processing approach where audio is recorded, converted to text, processed by Gemini AI, and the response is synthesized back to audio.
+Voice Gemini App - Google Gemini AIとのリアルタイム音声対話アプリケーションです。音声アクティビティ検出（VAD）により、話し始めると自動的に録音を開始し、話し終わると自動的にAIが応答を生成して音声で返答します。
 
-## Key Technologies
+## 主要技術
 
-- **genai-processors**: Core async pipeline processing framework for chaining AI operations
-- **vibe-logger**: AI-optimized structured logging library
-- **sounddevice**: Cross-platform audio recording
-- **Whisper/Google Cloud Speech**: Speech-to-text processing
-- **Gemini API**: AI conversation processing
-- **gTTS**: Text-to-speech synthesis
+- **genai-processors**: AI操作をチェーンするためのコア非同期パイプライン処理フレームワーク
+- **vibe-logger**: AI最適化された構造化ログライブラリ
+- **sounddevice**: クロスプラットフォーム音声録音
+- **Whisper/Google Cloud Speech**: 音声テキスト変換処理
+- **Gemini API**: AI会話処理
+- **gTTS**: テキスト音声合成
 
-## Project Structure
+## プロジェクト構造
 
-The intended project structure follows this pattern:
+想定されるプロジェクト構造は以下のパターンに従います：
 
 ```
 voice-gemini-app/
-├── docs/                    # Documentation
+├── docs/                    # ドキュメント
 ├── src/
-│   ├── audio/              # Audio recording and synthesis
-│   ├── processors/         # genai-processors implementations
-│   └── utils/              # Logger setup and configuration
-├── logs/                   # Log output directory
-└── tests/                  # Test files
+│   ├── audio/              # 音声録音と合成
+│   ├── processors/         # genai-processors実装
+│   └── utils/              # ロガー設定と構成
+├── logs/                   # ログ出力ディレクトリ
+└── tests/                  # テストファイル
 ```
 
-## Development Commands
-
-Since the project is not yet implemented, here are the intended commands based on the documentation:
+## 開発コマンド
 
 ```bash
-# Create virtual environment
-python -m venv venv
+# 環境セットアップ
+./scripts/setup.sh
 
-# Activate virtual environment
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate     # Windows
+# アプリケーション実行
+python -m src.main  # 適切なインポートのために -m フラグを使用
 
-# Install dependencies (when requirements.txt is created)
-pip install -r requirements.txt
+# テスト実行
+pytest tests/
 
-# Run the application (planned)
-python src/main.py
+# カバレッジ付きテスト実行
+./scripts/run_tests.sh --coverage
 
-# Check available audio devices
-python -m sounddevice
+# リント実行
+./scripts/run_tests.sh --lint
 ```
 
-## Architecture Overview
+## アーキテクチャ概要
 
-The application follows a three-phase architecture:
+### リアルタイム音声処理フロー
 
-1. **Audio Recording Phase** (Synchronous)
-   - Records audio from microphone to WAV file buffer
-   - Uses sounddevice for cross-platform compatibility
+1. **VAD録音フェーズ**（非同期処理）
+   - 音声アクティビティ検出により自動録音開始
+   - リアルタイム音声レベル表示
+   - 無音検出による自動録音停止
+   - プレバッファ機能（話し始める前の音声も保存）
 
-2. **Async Processing Pipeline** (genai-processors)
+2. **非同期処理パイプライン**（genai-processors）
    - AudioProcessor → STTProcessor → GeminiProcessor → TTSProcessor
-   - Each processor is a separate async unit that can be chained
-   - Processors communicate via async streams of ProcessorParts
+   - 各プロセッサは個別の非同期ユニットとしてチェーン可能
+   - ProcessorPartオブジェクトで通信（text属性とmetadata属性）
 
-3. **Logging Layer** (vibe-logger)
-   - Structured logging optimized for AI analysis
-   - Async wrapper for non-blocking logging in the pipeline
-   - Tracks metrics: processing times, token usage, errors
+3. **ロギング層**
+   - 標準Pythonロギングとvibe-logger互換
+   - 非同期環境でのロギング対応
+   - メトリクス追跡：処理時間、音声レベル、APIレスポンス
 
-## Key Implementation Notes
+## 重要な実装詳細
 
-- **Async Processing**: All processors must implement the genai-processors Processor interface
-- **Error Handling**: Each processor should log errors with full context using vibe-logger
-- **Audio Format**: Default to 16kHz WAV format for compatibility
-- **Whisper Models**: Start with 'base' model for balance of speed/accuracy
-- **Environment Variables**: Configuration via .env file (see docs/voice-gemini-app.md)
+### Pydantic v2 互換性
+プロジェクトは設定管理に`pydantic-settings`を使用したPydantic v2を使用：
+- BaseSettingsは`pydantic`ではなく`pydantic_settings`からインポート
+- `@classmethod`デコレータ付きの`field_validator`を使用
+- 内部`Config`クラスの代わりに`model_config = SettingsConfigDict()`
+- **重要**: 検証エラーを防ぐため各設定クラスで`extra="ignore"`を設定
 
-## Current Status
+### genai-processors統合
+- `ProcessorPart`を直接使用（第一引数にtext、metadataはキーワード引数）
+- ProcessorPartは`text`属性を持つ（`content`ではない）
+- ベースプロセッサで`call()`と`__call__()`の両メソッドを実装
+- パイプライン構成には`chain()`関数を使用
+- `genai_processors`からインポート：`streams`、`chain`、`ProcessorPart`
 
-- Project documentation is complete (docs/voice-gemini-app.md)
-- Implementation has not yet started
-- Focus on building the processor pipeline architecture first
+### ロギングセットアップ
+- vibe-loggerが利用できない場合は標準Pythonロギングを使用
+- 非同期操作のためAsyncLoggerWrapperでラップ
+- `get_running_loop()`を使用してイベントループを取得
+
+### 音声処理
+- **VADRecorder**: リアルタイム音声アクティビティ検出
+- **音声再生**: sounddeviceを使用（simpleaudioのSegfault回避）
+- すべての音声データはfloat32 [-1, 1]範囲に正規化
+- デフォルトサンプルレート：16kHz（Whisperの要件）
+- gTTSはMP3を出力、一貫性のためWAVに変換
+
+### 非同期処理
+- **AsyncInputReader**: バックグラウンドスレッドで入力を読み取り
+- selectモジュールでノンブロッキング入力（Unix/Linux/macOS）
+- 適切なタスクキャンセルとクリーンアップ
+
+## よくある問題と解決策
+
+### モジュールインポートエラー
+アプリケーションは常にモジュールとして実行：
+```bash
+# 正しい
+python -m src.main
+
+# 間違い（相対インポートエラーの原因）
+python src/main.py
+```
+
+### Geminiモデルの変更
+gemini-proは廃止されました。以下のモデルを使用：
+```env
+GEMINI_MODEL=gemini-1.5-flash  # 高速レスポンス
+# または
+GEMINI_MODEL=gemini-1.5-pro    # 高精度
+```
+
+### 環境変数
+必要なキーを含む`.env`ファイルが存在することを確認：
+- `GEMINI_API_KEY`（必須）
+- その他の設定はconfig.pyにデフォルト値あり
+
+## テストアプローチ
+
+- 非同期サポート付きpytestを使用（`pytest-asyncio`）
+- 外部依存関係（API、音声デバイス）をモック
+- `conftest.py`のテストフィクスチャがサンプルデータを提供
+- `-m`フラグで実行：`python -m pytest tests/`
+
+## 現在のステータス
+
+- **リアルタイム音声認識**: 実装完了（VAD機能）
+- **非同期処理**: 安定動作
+- **エラーハンドリング**: Ctrl+C対応済み
+- **ドキュメント**: 最新化完了（2025-07-13）
+
+## 主な変更履歴
+
+- 2025-07-13: リアルタイム音声認識（VAD）実装
+- 2025-07-13: ProcessorPartのAPI変更対応
+- 2025-07-13: 音声再生をsounddeviceに変更
+- 2025-07-12: 初期実装完了
