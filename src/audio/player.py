@@ -52,31 +52,48 @@ class AudioPlayer:
             raise PlaybackError(f"音声ファイルが見つかりません: {file_path}")
         
         await self.logger.info(
+            f"音声ファイルの再生を開始します",
             operation="playback_start",
-            message=f"音声ファイルの再生を開始します",
             file_path=str(file_path),
             file_size_bytes=file_path.stat().st_size
         )
         
         try:
-            # simpleaudioを使用した再生
-            wave_obj = sa.WaveObject.from_wave_file(str(file_path))
-            play_obj = wave_obj.play()
+            # sounddeviceを使用した再生（simpleaudioのSegmentation faultを回避）
+            loop = asyncio.get_event_loop()
+            
+            # WAVファイルを読み込み
+            sample_rate, audio_data = await loop.run_in_executor(
+                None,
+                lambda: wav.read(str(file_path))
+            )
+            
+            # データタイプを正規化
+            if audio_data.dtype == np.int16:
+                audio_data = audio_data.astype(np.float32) / 32768.0
+            elif audio_data.dtype == np.int32:
+                audio_data = audio_data.astype(np.float32) / 2147483648.0
+            
+            # 再生
+            await loop.run_in_executor(
+                None,
+                lambda: sd.play(audio_data, sample_rate, device=self.device)
+            )
             
             if wait:
-                # 非同期で再生完了を待つ
-                await self._wait_playback_async(play_obj)
+                # 再生完了まで待機
+                await loop.run_in_executor(None, sd.wait)
             
             await self.logger.info(
+                "音声ファイルの再生が完了しました",
                 operation="playback_complete",
-                message="音声ファイルの再生が完了しました",
                 file_path=str(file_path)
             )
             
         except Exception as e:
             await self.logger.error(
+                "音声再生中にエラーが発生しました",
                 operation="playback_error",
-                message="音声再生中にエラーが発生しました",
                 error=str(e),
                 error_type=type(e).__name__,
                 file_path=str(file_path)
@@ -101,8 +118,8 @@ class AudioPlayer:
         sample_rate = sample_rate or self.sample_rate
         
         await self.logger.info(
+            "音声データの再生を開始します",
             operation="playback_array_start",
-            message="音声データの再生を開始します",
             data_shape=audio_data.shape,
             sample_rate=sample_rate,
             duration_seconds=len(audio_data) / sample_rate
@@ -123,14 +140,14 @@ class AudioPlayer:
                 await loop.run_in_executor(None, sd.wait)
             
             await self.logger.info(
-                operation="playback_array_complete",
-                message="音声データの再生が完了しました"
+                "音声データの再生が完了しました",
+                operation="playback_array_complete"
             )
             
         except Exception as e:
             await self.logger.error(
+                "音声データ再生中にエラーが発生しました",
                 operation="playback_array_error",
-                message="音声データ再生中にエラーが発生しました",
                 error=str(e),
                 error_type=type(e).__name__
             )
@@ -193,8 +210,8 @@ class AudioPlayer:
                 })
         
         await logger.info(
+            "利用可能な出力デバイス",
             operation="list_output_devices",
-            message="利用可能な出力デバイス",
             devices=output_devices
         )
         
@@ -205,13 +222,13 @@ class AudioPlayer:
         try:
             sd.stop()
             await self.logger.info(
-                operation="playback_stop",
-                message="音声再生を停止しました"
+                "音声再生を停止しました",
+                operation="playback_stop"
             )
         except Exception as e:
             await self.logger.error(
+                "再生停止中にエラーが発生しました",
                 operation="playback_stop_error",
-                message="再生停止中にエラーが発生しました",
                 error=str(e)
             )
             raise PlaybackError(f"再生停止に失敗しました: {e}")
