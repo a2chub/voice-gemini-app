@@ -100,3 +100,31 @@ wheels/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Temporary test files
+test_*.py
+*_test.py
+*_test_report.md
+analyze_*.py
+fix_*.py
+run_test.py
+minimal_test.py
+simple_*.py
+
+# Temporary scripts
+scripts/dev_tools/
+test_scripts/
+
+# Integration tests
+tests/integration/
+
+# Recording files (keep the directory but ignore contents)
+recording_*.wav
+recording_*.mp3
+
+# Temporary documentation
+docs/test_reports/
+
+# Log analysis files
+log_test_report.md
+vibe_logger_test_report.md
