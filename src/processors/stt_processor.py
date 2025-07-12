@@ -56,8 +56,8 @@ class WhisperProcessor(BaseProcessor):
         """Whisperモデルを非同期で読み込み"""
         if self._model is None:
             await self.logger.info(
+                f"Whisperモデル '{self.model_name}' を読み込んでいます",
                 operation="whisper_model_loading",
-                message=f"Whisperモデル '{self.model_name}' を読み込んでいます",
                 model=self.model_name,
                 device=self.device
             )
@@ -75,8 +75,8 @@ class WhisperProcessor(BaseProcessor):
             self.add_metric('model_load_time', load_time)
             
             await self.logger.info(
+                f"Whisperモデルの読み込みが完了しました",
                 operation="whisper_model_loaded",
-                message=f"Whisperモデルの読み込みが完了しました",
                 model=self.model_name,
                 device=self.device,
                 load_time=load_time
@@ -115,7 +115,7 @@ class WhisperProcessor(BaseProcessor):
                 
                 # ProcessorPartの作成
                 yield ProcessorPart(
-                    content=result['text'],
+                    result['text'],
                     metadata={
                         'transcription': result,
                         'language': result.get('language', self.language),
@@ -126,8 +126,8 @@ class WhisperProcessor(BaseProcessor):
                 
             except Exception as e:
                 await self.logger.error(
+                    "音声認識中にエラーが発生しました",
                     operation="whisper_transcription_error",
-                    message="音声認識中にエラーが発生しました",
                     error=str(e),
                     error_type=type(e).__name__
                 )
@@ -182,8 +182,8 @@ class WhisperProcessor(BaseProcessor):
                 }
                 
                 await self.logger.info(
+                    "音声認識が完了しました",
                     operation="whisper_transcription_complete",
-                    message="音声認識が完了しました",
                     text_preview=processed_result['text'][:100],
                     text_length=len(processed_result['text']),
                     transcription_time=transcription_time,

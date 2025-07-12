@@ -68,7 +68,7 @@ class AudioFileProcessor(AudioProcessorBase):
             
             # ProcessorPartの作成
             yield ProcessorPart(
-                content=None,  # テキストコンテンツはなし
+                "",  # テキストコンテンツはなし（空文字列）
                 metadata={
                     'audio_data': audio_data,
                     'sample_rate': actual_sample_rate,
@@ -79,9 +79,9 @@ class AudioFileProcessor(AudioProcessorBase):
     
     def _extract_file_path(self, part: ProcessorPart) -> Path:
         """ProcessorPartからファイルパスを抽出"""
-        # contentにファイルパスが含まれている場合
-        if part.content:
-            return Path(part.content.strip())
+        # textにファイルパスが含まれている場合
+        if part.text:
+            return Path(part.text.strip())
         
         # metadataにfile_pathが含まれている場合
         if part.metadata and 'file_path' in part.metadata:

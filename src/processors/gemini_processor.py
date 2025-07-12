@@ -69,8 +69,8 @@ class GeminiChatProcessor(TextProcessorBase):
         """Geminiモデルを初期化"""
         if self._model is None:
             await self.logger.info(
+                f"Geminiモデル '{self.model_name}' を初期化しています",
                 operation="gemini_model_initialization",
-                message=f"Geminiモデル '{self.model_name}' を初期化しています",
                 model=self.model_name
             )
             
@@ -91,14 +91,14 @@ class GeminiChatProcessor(TextProcessorBase):
                     await self._send_system_prompt()
                 
                 await self.logger.info(
-                    operation="gemini_model_initialized",
-                    message="Geminiモデルの初期化が完了しました"
+                    "Geminiモデルの初期化が完了しました",
+                    operation="gemini_model_initialized"
                 )
                 
             except Exception as e:
                 await self.logger.error(
+                    "Geminiモデルの初期化に失敗しました",
                     operation="gemini_initialization_error",
-                    message="Geminiモデルの初期化に失敗しました",
                     error=str(e),
                     error_type=type(e).__name__
                 )
@@ -118,8 +118,8 @@ class GeminiChatProcessor(TextProcessorBase):
             )
         except Exception as e:
             await self.logger.warning(
+                "システムプロンプトの送信に失敗しました",
                 operation="system_prompt_error",
-                message="システムプロンプトの送信に失敗しました",
                 error=str(e)
             )
     
@@ -151,7 +151,7 @@ class GeminiChatProcessor(TextProcessorBase):
                 
                 # ProcessorPartの作成
                 yield ProcessorPart(
-                    content=response['text'],
+                    response['text'],
                     metadata={
                         'gemini_response': response,
                         'processor': 'gemini',
@@ -162,8 +162,8 @@ class GeminiChatProcessor(TextProcessorBase):
                 
             except Exception as e:
                 await self.logger.error(
+                    "Gemini API呼び出し中にエラーが発生しました",
                     operation="gemini_api_error",
-                    message="Gemini API呼び出し中にエラーが発生しました",
                     error=str(e),
                     error_type=type(e).__name__,
                     input_text=text[:100]
@@ -172,9 +172,9 @@ class GeminiChatProcessor(TextProcessorBase):
     
     def _extract_text(self, part: ProcessorPart) -> Optional[str]:
         """ProcessorPartからテキストを抽出"""
-        # contentにテキストが含まれている場合
-        if part.content:
-            return part.content.strip()
+        # textにテキストが含まれている場合
+        if part.text:
+            return part.text.strip()
         
         # metadataにtranscriptionが含まれている場合
         if part.metadata and 'transcription' in part.metadata:
@@ -189,8 +189,8 @@ class GeminiChatProcessor(TextProcessorBase):
         loop = asyncio.get_event_loop()
         
         await self.logger.info(
+            "Gemini APIを呼び出しています",
             operation="gemini_api_call_start",
-            message="Gemini APIを呼び出しています",
             input_preview=text[:100],
             input_length=len(text)
         )
@@ -222,8 +222,8 @@ class GeminiChatProcessor(TextProcessorBase):
             self.add_metric('total_tokens', result['total_tokens'])
             
             await self.logger.info(
+                "Gemini API呼び出しが完了しました",
                 operation="gemini_api_call_complete",
-                message="Gemini API呼び出しが完了しました",
                 response_preview=result['text'][:100],
                 response_length=len(result['text']),
                 api_latency=api_latency,

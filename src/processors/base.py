@@ -42,8 +42,8 @@ class BaseProcessor(Processor):
             処理結果のProcessorPart
         """
         await self.logger.info(
-            operation=f"{self.name}_start",
-            message=f"{self.name}プロセッサーを開始します"
+            f"{self.name}プロセッサーを開始します",
+            operation=f"{self.name}_start"
         )
         
         start_time = time.time()
@@ -59,8 +59,8 @@ class BaseProcessor(Processor):
             
         except Exception as e:
             await self.logger.error(
+                f"{self.name}プロセッサーでエラーが発生しました",
                 operation=f"{self.name}_error",
-                message=f"{self.name}プロセッサーでエラーが発生しました",
                 error=str(e),
                 error_type=type(e).__name__
             )
@@ -105,8 +105,8 @@ class BaseProcessor(Processor):
     async def _log_metrics(self):
         """プロセッサーのメトリクスをログに記録"""
         await self.logger.info(
+            f"{self.name}プロセッサーのメトリクス",
             operation=f"{self.name}_metrics",
-            message=f"{self.name}プロセッサーのメトリクス",
             processor=self.name,
             **self._metrics
         )

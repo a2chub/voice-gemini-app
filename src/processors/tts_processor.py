@@ -78,7 +78,7 @@ class GTTSProcessor(TextProcessorBase):
                 
                 # ProcessorPartの作成
                 yield ProcessorPart(
-                    content=None,  # 音声データなのでcontentは空
+                    "",  # 音声データなのでtextは空文字列
                     metadata={
                         'audio_data': audio_data,
                         'sample_rate': sample_rate,
@@ -91,8 +91,8 @@ class GTTSProcessor(TextProcessorBase):
                 
             except Exception as e:
                 await self.logger.error(
+                    "音声合成中にエラーが発生しました",
                     operation="tts_error",
-                    message="音声合成中にエラーが発生しました",
                     error=str(e),
                     error_type=type(e).__name__,
                     text_preview=text[:100]
@@ -101,9 +101,9 @@ class GTTSProcessor(TextProcessorBase):
     
     def _extract_text(self, part: ProcessorPart) -> Optional[str]:
         """ProcessorPartからテキストを抽出"""
-        # contentにテキストが含まれている場合
-        if part.content:
-            return part.content.strip()
+        # textにテキストが含まれている場合
+        if part.text:
+            return part.text.strip()
         
         # metadataにgemini_responseが含まれている場合
         if part.metadata and 'gemini_response' in part.metadata:
@@ -118,8 +118,8 @@ class GTTSProcessor(TextProcessorBase):
         loop = asyncio.get_event_loop()
         
         await self.logger.info(
+            "音声合成を開始します",
             operation="tts_synthesis_start",
-            message="音声合成を開始します",
             text_preview=text[:100],
             text_length=len(text),
             language=self.language,
@@ -149,8 +149,8 @@ class GTTSProcessor(TextProcessorBase):
             self.add_metric('output_file_size', wav_path.stat().st_size)
             
             await self.logger.info(
+                "音声合成が完了しました",
                 operation="tts_synthesis_complete",
-                message="音声合成が完了しました",
                 synthesis_time=synthesis_time,
                 output_path=str(wav_path),
                 file_size_bytes=wav_path.stat().st_size
