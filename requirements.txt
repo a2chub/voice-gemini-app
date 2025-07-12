@@ -1,6 +1,6 @@
 # Core libraries
 genai-processors>=0.1.0
-vibelogger>=0.1.0
+vibe-logger>=0.1.0
 
 # Audio processing
 sounddevice>=0.4.6
