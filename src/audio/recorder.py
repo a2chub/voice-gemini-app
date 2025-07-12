@@ -78,16 +78,16 @@ class AudioRecorder:
         
         if duration > max_duration:
             await self.logger.warning(
+                f"録音時間が最大値を超えています。{max_duration}秒に制限します。",
                 operation="recording_duration_limit",
-                message=f"録音時間が最大値を超えています。{max_duration}秒に制限します。",
                 requested_duration=duration,
                 max_duration=max_duration
             )
             duration = max_duration
         
         await self.logger.info(
+            f"{duration}秒間の録音を開始します",
             operation="recording_start",
-            message=f"{duration}秒間の録音を開始します",
             duration=duration,
             sample_rate=self.sample_rate,
             channels=self.channels
@@ -109,8 +109,8 @@ class AudioRecorder:
             
             # メトリクスのログ
             await self.logger.info(
+                "録音が完了しました",
                 operation="recording_complete",
-                message="録音が完了しました",
                 duration=duration,
                 actual_duration=recording_time,
                 file_path=str(output_path),
