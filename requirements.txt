@@ -1,0 +1,35 @@
+# Core libraries
+genai-processors>=0.1.0
+vibelogger>=0.1.0
+
+# Audio processing
+sounddevice>=0.4.6
+scipy>=1.10.0
+numpy>=1.24.0
+
+# Speech recognition
+openai-whisper>=20230918
+
+# Text-to-speech
+gTTS>=2.3.0
+pydub>=0.25.1
+simpleaudio>=1.0.4
+
+# Async processing
+aiofiles>=23.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Development dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Optional for enhanced features
+# google-cloud-speech>=2.20.0  # Alternative to Whisper
+# ffmpeg-python>=0.2.0  # For audio format conversion
